@@ -75,19 +75,20 @@ app.post('/ussd', (req, res) => {
             // View votes option selected
 
             // Query the database to get the votes
-            const query = 'SELECT voted_candidate FROM votes WHERE voted_candidate != "Viewed Votes"';
+            const query = 'SELECT voted_candidate, COUNT(*) as count FROM votes WHERE voted_candidate != "Viewed Votes" GROUP BY voted_candidate';
             db.query(query, (err, results) => {
                 if (err) {
                     console.error('Error fetching votes from database:', err.stack);
                     response = userLanguages[phoneNumber] === 'en' ? 
                         `END Error fetching votes. Please try again later.` : 
                         `END Hitilafu katika kupata kura. Tafadhali jaribu tena baadaye.`;
+                    res.send(response);
                 } else {
                     response = userLanguages[phoneNumber] === 'en' ? 
                         `END Votes:\n` : 
                         `END Kura:\n`;
                     results.forEach(row => {
-                        response += `${row.voted_candidate}\n`;
+                        response += `${row.voted_candidate}: ${row.count} votes\n`;
                     });
 
                     // Insert view votes record into the database
@@ -104,11 +105,10 @@ app.post('/ussd', (req, res) => {
                         if (err) {
                             console.error('Error inserting data into database:', err.stack);
                         }
+                        res.send(response);
                     });
                 }
-                res.send(response);
-            });
-            return; // Return here to avoid sending the response twice
+            });// Return here to avoid sending the response twice
         }
     } else if (userInput.length === 4) {
         // Fourth level menu: Voting confirmation
