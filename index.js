@@ -1,10 +1,28 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const mysql = require('mysql');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.urlencoded({ extended: false }));
+
+// Create a connection to the MySQL database
+const db = mysql.createConnection({
+    host: 'bmwnqwmtaqw5xp1cwaty-mysql.services.clever-cloud.com',
+    user: 'uvqpshad4m6dgq9v',
+    password: 'LAoMxm0l0mrzxu4sJGuk', // Replace with your MySQL password
+    database: 'bmwnqwmtaqw5xp1cwaty'
+});
+
+// Connect to the database
+db.connect(err => {
+    if (err) {
+        console.error('Database connection failed:', err.stack);
+        return;
+    }
+    console.log('Connected to database.');
+});
 
 // In-memory storage for votes (for simplicity)
 let votes = {
@@ -81,6 +99,22 @@ app.post('/ussd', (req, res) => {
             response = userLanguages[phoneNumber] === 'en' ? 
                 `END Thank you for voting for ${candidateNames[candidateIndex]}!` : 
                 `END Asante kwa kumpigia kura ${candidateNames[candidateIndex]}!`;
+
+            // Insert voting record into the database
+            const voteData = {
+                session_id: sessionId,
+                phone_number: phoneNumber,
+                user_name: userNames[phoneNumber],
+                language_used: userLanguages[phoneNumber],
+                voted_candidate: candidateNames[candidateIndex]
+            };
+
+            const query = 'INSERT INTO votes SET ?';
+            db.query(query, voteData, (err, result) => {
+                if (err) {
+                    console.error('Error inserting data into database:', err.stack);
+                }
+            });
         } else {
             response = userLanguages[phoneNumber] === 'en' ? 
                 `END Invalid selection. Please try again.` : 
