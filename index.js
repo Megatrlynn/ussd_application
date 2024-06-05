@@ -99,7 +99,7 @@ app.post('/ussd', (req, res) => {
                         view_candidate: 'Viewed Votes'
                     };
 
-                    const insertQuery = 'INSERT INTO votes SET ?';
+                    const insertQuery = 'INSERT INTO view_votes SET ?';
                     db.query(insertQuery, viewVoteData, (err, result) => {
                         if (err) {
                             console.error('Error inserting data into database:', err.stack);
