@@ -24,15 +24,6 @@ db.connect(err => {
     console.log('Connected to database.');
 });
 
-// In-memory storage for votes (for simplicity)
-let votes = {
-    "Raymond I. ": 0,
-    "Florence U. ": 0,
-    "Jean Paul K. ": 0,
-    "Gaella U. ": 0,
-    "Danny H. ": 0
-};
-
 // In-memory storage for user data (for simplicity)
 let userNames = {};
 let voters = new Set(); // Set to track phone numbers that have already voted
@@ -82,35 +73,48 @@ app.post('/ussd', (req, res) => {
             }
         } else if (userInput[2] === '2') {
             // View votes option selected
-            response = userLanguages[phoneNumber] === 'en' ? 
-                `END Votes:\n` : 
-                `END Kura:\n`;
-            for (let candidate in votes) {
-                response += `${candidate}: ${votes[candidate]} votes\n`;
-            }
 
-            // Insert view votes record into the database
-            const viewVoteData = {
-                session_id: sessionId,
-                phone_number: phoneNumber,
-                user_name: userNames[phoneNumber],
-                language_used: userLanguages[phoneNumber],
-                voted_candidate: 'Viewed Votes'
-            };
-
-            const query = 'INSERT INTO votes SET ?';
-            db.query(query, viewVoteData, (err, result) => {
+            // Query the database to get the votes
+            const query = 'SELECT voted_candidate, COUNT(*) as count FROM votes GROUP BY voted_candidate';
+            db.query(query, (err, results) => {
                 if (err) {
-                    console.error('Error inserting data into database:', err.stack);
+                    console.error('Error fetching votes from database:', err.stack);
+                    response = userLanguages[phoneNumber] === 'en' ? 
+                        `END Error fetching votes. Please try again later.` : 
+                        `END Hitilafu katika kupata kura. Tafadhali jaribu tena baadaye.`;
+                } else {
+                    response = userLanguages[phoneNumber] === 'en' ? 
+                        `END Votes:\n` : 
+                        `END Kura:\n`;
+                    results.forEach(row => {
+                        response += `${row.voted_candidate}: ${row.count} votes\n`;
+                    });
+
+                    // Insert view votes record into the database
+                    const viewVoteData = {
+                        session_id: sessionId,
+                        phone_number: phoneNumber,
+                        user_name: userNames[phoneNumber],
+                        language_used: userLanguages[phoneNumber],
+                        voted_candidate: 'Viewed Votes'
+                    };
+
+                    const insertQuery = 'INSERT INTO votes SET ?';
+                    db.query(insertQuery, viewVoteData, (err, result) => {
+                        if (err) {
+                            console.error('Error inserting data into database:', err.stack);
+                        }
+                    });
                 }
+                res.send(response);
             });
+            return; // Return here to avoid sending the response twice
         }
     } else if (userInput.length === 4) {
         // Fourth level menu: Voting confirmation
         let candidateIndex = parseInt(userInput[3]) - 1;
-        let candidateNames = Object.keys(votes);
+        let candidateNames = ["Raymond I. ", "Florence U. ", "Jean Paul K. ", "Gaella U. ", "Danny H. "];
         if (candidateIndex >= 0 && candidateIndex < candidateNames.length) {
-            votes[candidateNames[candidateIndex]] += 1;
             voters.add(phoneNumber); // Mark this phone number as having voted
             response = userLanguages[phoneNumber] === 'en' ? 
                 `END Thank you for voting for ${candidateNames[candidateIndex]}!` : 
@@ -129,6 +133,9 @@ app.post('/ussd', (req, res) => {
             db.query(query, voteData, (err, result) => {
                 if (err) {
                     console.error('Error inserting data into database:', err.stack);
+                } else {
+                    // Increment the in-memory vote count
+                    votes[candidateNames[candidateIndex]] += 1;
                 }
             });
         } else {
