@@ -88,6 +88,22 @@ app.post('/ussd', (req, res) => {
             for (let candidate in votes) {
                 response += `${candidate}: ${votes[candidate]} votes\n`;
             }
+
+            // Insert view votes record into the database
+            const viewVoteData = {
+                session_id: sessionId,
+                phone_number: phoneNumber,
+                user_name: userNames[phoneNumber],
+                language_used: userLanguages[phoneNumber],
+                voted_candidate: 'Viewed Votes'
+            };
+
+            const query = 'INSERT INTO votes SET ?';
+            db.query(query, viewVoteData, (err, result) => {
+                if (err) {
+                    console.error('Error inserting data into database:', err.stack);
+                }
+            });
         }
     } else if (userInput.length === 4) {
         // Fourth level menu: Voting confirmation
