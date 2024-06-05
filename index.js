@@ -6,7 +6,18 @@ const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// Language Selection Menu
+// In-memory storage for votes (for simplicity)
+let votes = {
+    "Candidate 1": 0,
+    "Candidate 2": 0,
+    "Candidate 3": 0,
+    "Candidate 4": 0,
+    "Candidate 5": 0
+};
+
+// In-memory storage for user data (for simplicity)
+let userNames = {};
+
 app.post('/ussd', (req, res) => {
     let response = '';
 
@@ -26,25 +37,39 @@ app.post('/ussd', (req, res) => {
         // Second level menu: Name input
         response = `CON Please enter your name:`;
     } else if (userInput.length === 3) {
+        // Save user's name
+        userNames[phoneNumber] = userInput[2];
+
         // Third level menu: Main menu
-        if (userInput[2] === '1') {
+        response = `CON Hi ${userNames[phoneNumber]}, choose an option:\n`;
+        response += `1. Vote Candidate\n`;
+        response += `2. View Votes`;
+    } else if (userInput.length === 4) {
+        if (userInput[3] === '1') {
             // Voting option selected
             response = `CON Select a candidate:\n`;
-            // List candidates here
             response += `1. Candidate 1\n`;
             response += `2. Candidate 2\n`;
             response += `3. Candidate 3\n`;
             response += `4. Candidate 4\n`;
             response += `5. Candidate 5`;
-        } else if (userInput[2] === '2') {
+        } else if (userInput[3] === '2') {
             // View votes option selected
             response = `END Votes:\n`;
-            // Fetch and display voted users here
+            for (let candidate in votes) {
+                response += `${candidate}: ${votes[candidate]} votes\n`;
+            }
         }
-    } else if (userInput.length === 4) {
+    } else if (userInput.length === 5) {
         // Fourth level menu: Voting confirmation
-        response = `END Thank you for voting!`;
-        // Record the vote here
+        let candidateIndex = parseInt(userInput[4]) - 1;
+        let candidateNames = Object.keys(votes);
+        if (candidateIndex >= 0 && candidateIndex < candidateNames.length) {
+            votes[candidateNames[candidateIndex]] += 1;
+            response = `END Thank you for voting for ${candidateNames[candidateIndex]}!`;
+        } else {
+            response = `END Invalid selection. Please try again.`;
+        }
     }
 
     res.send(response);
