@@ -8,11 +8,11 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 // In-memory storage for votes (for simplicity)
 let votes = {
-    "Raymond IGABINEZA": 0,
-    "Florence UMUTONIWASE": 0,
-    "Jean Paul KWIBUKA": 0,
-    "Gaella UWAYO": 0,
-    "Danny HABIMANA": 0
+    "Raymond I.": 0,
+    "Florence U.": 0,
+    "Jean Paul K.": 0,
+    "Gaella U.": 0,
+    "Danny H.": 0
 };
 
 // In-memory storage for user data (for simplicity)
