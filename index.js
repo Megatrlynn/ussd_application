@@ -18,6 +18,7 @@ let votes = {
 // In-memory storage for user data (for simplicity)
 let userNames = {};
 let voters = new Set(); // Set to track phone numbers that have already voted
+let userLanguages = {}; // Object to store the language preference of each user
 
 app.post('/ussd', (req, res) => {
     let response = '';
@@ -36,32 +37,36 @@ app.post('/ussd', (req, res) => {
         response += `2. Swahili`;
     } else if (userInput.length === 1 && userInput[0] !== '') {
         // Save user's language choice and move to the name input menu
-        response = `CON Please enter your name:`;
+        userLanguages[phoneNumber] = userInput[0] === '1' ? 'en' : 'sw';
+        response = userLanguages[phoneNumber] === 'en' ? 
+            `CON Please enter your name:` : 
+            `CON Tafadhali ingiza jina lako:`;
     } else if (userInput.length === 2) {
         // Save user's name
         userNames[phoneNumber] = userInput[1];
 
         // Check if the phone number has already voted
         if (voters.has(phoneNumber)) {
-            response = `END You have already voted. Thank you!`;
+            response = userLanguages[phoneNumber] === 'en' ? 
+                `END You have already voted. Thank you!` : 
+                `END Tayari umeshapiga kura. Asante!`;
         } else {
             // Third level menu: Main menu
-            response = `CON Hi ${userNames[phoneNumber]}, choose an option:\n`;
-            response += `1. Vote Candidate\n`;
-            response += `2. View Votes`;
+            response = userLanguages[phoneNumber] === 'en' ? 
+                `CON Hi ${userNames[phoneNumber]}, choose an option:\n1. Vote Candidate\n2. View Votes` : 
+                `CON Habari ${userNames[phoneNumber]}, chagua chaguo:\n1. Piga kura\n2. Tazama kura`;
         }
     } else if (userInput.length === 3) {
         if (userInput[2] === '1') {
             // Voting option selected
-            response = `CON Select a candidate:\n`;
-            response += `1. Raymond IGABINEZA\n`;
-            response += `2. Florence UMUTONIWASE\n`;
-            response += `3. Jean Paul KWIBUKA\n`;
-            response += `4. Gaella UWAYO\n`;
-            response += `5. Danny HABIMANA`;
+            response = userLanguages[phoneNumber] === 'en' ? 
+                `CON Select a candidate:\n1. Raymond IGABINEZA\n2. Florence UMUTONIWASE\n3. Jean Paul KWIBUKA\n4. Gaella UWAYO\n5. Danny HABIMANA` : 
+                `CON Chagua mgombea:\n1. Raymond IGABINEZA\n2. Florence UMUTONIWASE\n3. Jean Paul KWIBUKA\n4. Gaella UWAYO\n5. Danny HABIMANA`;
         } else if (userInput[2] === '2') {
             // View votes option selected
-            response = `END Votes:\n`;
+            response = userLanguages[phoneNumber] === 'en' ? 
+                `END Votes:\n` : 
+                `END Kura:\n`;
             for (let candidate in votes) {
                 response += `${candidate}: ${votes[candidate]} votes\n`;
             }
@@ -73,9 +78,13 @@ app.post('/ussd', (req, res) => {
         if (candidateIndex >= 0 && candidateIndex < candidateNames.length) {
             votes[candidateNames[candidateIndex]] += 1;
             voters.add(phoneNumber); // Mark this phone number as having voted
-            response = `END Thank you for voting for ${candidateNames[candidateIndex]}!`;
+            response = userLanguages[phoneNumber] === 'en' ? 
+                `END Thank you for voting for ${candidateNames[candidateIndex]}!` : 
+                `END Asante kwa kumpigia kura ${candidateNames[candidateIndex]}!`;
         } else {
-            response = `END Invalid selection. Please try again.`;
+            response = userLanguages[phoneNumber] === 'en' ? 
+                `END Invalid selection. Please try again.` : 
+                `END Uchaguzi batili. Tafadhali jaribu tena.`;
         }
     }
 
