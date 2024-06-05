@@ -75,7 +75,7 @@ app.post('/ussd', (req, res) => {
             // View votes option selected
 
             // Query the database to get the votes
-            const query = 'SELECT voted_candidate, COUNT(*) as count FROM votes GROUP BY voted_candidate';
+            const query = 'SELECT voted_candidate FROM votes WHERE voted_candidate != "Viewed Votes"';
             db.query(query, (err, results) => {
                 if (err) {
                     console.error('Error fetching votes from database:', err.stack);
@@ -87,7 +87,7 @@ app.post('/ussd', (req, res) => {
                         `END Votes:\n` : 
                         `END Kura:\n`;
                     results.forEach(row => {
-                        response += `${row.voted_candidate}: ${row.count} votes\n`;
+                        response += `${row.voted_candidate}\n`;
                     });
 
                     // Insert view votes record into the database
