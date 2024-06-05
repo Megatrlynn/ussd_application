@@ -45,23 +45,23 @@ app.post('/ussd', (req, res) => {
         // Save user's name
         userNames[phoneNumber] = userInput[1];
 
-        // Check if the phone number has already voted
-        if (voters.has(phoneNumber)) {
-            response = userLanguages[phoneNumber] === 'en' ? 
-                `END You have already voted. Thank you!` : 
-                `END Tayari umeshapiga kura. Asante!`;
-        } else {
-            // Third level menu: Main menu
-            response = userLanguages[phoneNumber] === 'en' ? 
-                `CON Hi ${userNames[phoneNumber]}, choose an option:\n1. Vote Candidate\n2. View Votes` : 
-                `CON Habari ${userNames[phoneNumber]}, chagua chaguo:\n1. Piga kura\n2. Tazama kura`;
-        }
+        // Third level menu: Main menu
+        response = userLanguages[phoneNumber] === 'en' ? 
+            `CON Hi ${userNames[phoneNumber]}, choose an option:\n1. Vote Candidate\n2. View Votes` : 
+            `CON Habari ${userNames[phoneNumber]}, chagua chaguo:\n1. Piga kura\n2. Tazama kura`;
     } else if (userInput.length === 3) {
         if (userInput[2] === '1') {
-            // Voting option selected
-            response = userLanguages[phoneNumber] === 'en' ? 
-                `CON Select a candidate:\n1. Raymond IGABINEZA\n2. Florence UMUTONIWASE\n3. Jean Paul KWIBUKA\n4. Gaella UWAYO\n5. Danny HABIMANA` : 
-                `CON Chagua mgombea:\n1. Raymond IGABINEZA\n2. Florence UMUTONIWASE\n3. Jean Paul KWIBUKA\n4. Gaella UWAYO\n5. Danny HABIMANA`;
+            // Check if the phone number has already voted
+            if (voters.has(phoneNumber)) {
+                response = userLanguages[phoneNumber] === 'en' ? 
+                    `END You have already voted. Thank you!` : 
+                    `END Tayari umeshapiga kura. Asante!`;
+            } else {
+                // Voting option selected
+                response = userLanguages[phoneNumber] === 'en' ? 
+                    `CON Select a candidate:\n1. Raymond IGABINEZA\n2. Florence UMUTONIWASE\n3. Jean Paul KWIBUKA\n4. Gaella UWAYO\n5. Danny HABIMANA` : 
+                    `CON Chagua mgombea:\n1. Raymond IGABINEZA\n2. Florence UMUTONIWASE\n3. Jean Paul KWIBUKA\n4. Gaella UWAYO\n5. Danny HABIMANA`;
+            }
         } else if (userInput[2] === '2') {
             // View votes option selected
             response = userLanguages[phoneNumber] === 'en' ? 
