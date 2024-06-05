@@ -17,6 +17,7 @@ let votes = {
 
 // In-memory storage for user data (for simplicity)
 let userNames = {};
+let voters = new Set(); // Set to track phone numbers that have already voted
 
 app.post('/ussd', (req, res) => {
     let response = '';
@@ -40,10 +41,15 @@ app.post('/ussd', (req, res) => {
         // Save user's name
         userNames[phoneNumber] = userInput[1];
 
-        // Third level menu: Main menu
-        response = `CON Hi ${userNames[phoneNumber]}, choose an option:\n`;
-        response += `1. Vote Candidate\n`;
-        response += `2. View Votes`;
+        // Check if the phone number has already voted
+        if (voters.has(phoneNumber)) {
+            response = `END You have already voted. Thank you!`;
+        } else {
+            // Third level menu: Main menu
+            response = `CON Hi ${userNames[phoneNumber]}, choose an option:\n`;
+            response += `1. Vote Candidate\n`;
+            response += `2. View Votes`;
+        }
     } else if (userInput.length === 3) {
         if (userInput[2] === '1') {
             // Voting option selected
@@ -66,6 +72,7 @@ app.post('/ussd', (req, res) => {
         let candidateNames = Object.keys(votes);
         if (candidateIndex >= 0 && candidateIndex < candidateNames.length) {
             votes[candidateNames[candidateIndex]] += 1;
+            voters.add(phoneNumber); // Mark this phone number as having voted
             response = `END Thank you for voting for ${candidateNames[candidateIndex]}!`;
         } else {
             response = `END Invalid selection. Please try again.`;
